@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useRef } from 'react'
 import { useGazeContext } from '@/context/gaze-context'
 import { useReaderSettings } from '@/context/reader-settings'
 import { SAMPLE_READER_TEXT } from '@/data/sampleText'
+import { mapWebcamGazeToScrollFrame } from '@/gaze/readerGazeMapping'
 import { mockGazeSample } from '@/gaze/mockDriver'
 import { usePrefersReducedMotion } from '@/hooks/use-prefers-reduced-motion'
 import {
@@ -13,8 +14,6 @@ import {
   createInitialScrollState,
   type ScrollControllerState,
 } from '@/reader/controlTypes'
-
-const clamp01 = (v: number) => Math.min(1, Math.max(0, v))
 
 export function ReaderViewport() {
   const settings = useReaderSettings()
@@ -94,17 +93,21 @@ export function ReaderViewport() {
         } else {
           const g = gazeApiRef.current.latestRef.current
           const r = el.getBoundingClientRect()
-          if (
-            g.clientX != null &&
-            g.clientY != null &&
-            r.width > 0 &&
-            r.height > 0
-          ) {
-            nx = clamp01((g.clientX - r.left) / r.width)
-            ny = clamp01((g.clientY - r.top) / r.height)
-            confidence =
-              g.confidence *
-              (0.55 + 0.45 * s.calibrationConfidenceBoost)
+          const hold = controllerRef.current
+          if (g.clientX != null && g.clientY != null) {
+            const mapped = mapWebcamGazeToScrollFrame({
+              clientX: g.clientX,
+              clientY: g.clientY,
+              readerRect: r,
+              heldNx: hold.gazeNx,
+              heldNy: hold.gazeNy,
+              baseConfidence:
+                g.confidence *
+                (0.55 + 0.45 * s.calibrationConfidenceBoost),
+            })
+            nx = mapped.nx
+            ny = mapped.ny
+            confidence = mapped.confidence
           } else {
             confidence = 0
           }
@@ -166,6 +169,18 @@ export function ReaderViewport() {
   const s = settings
   const debug = s.debugOverlay && s.gazeSource === 'webcam'
   const gaze = gazeApi
+  const scrollEl = scrollRef.current
+  const gazeDebug =
+    scrollEl && gaze.latestRef.current.clientX != null
+      ? mapWebcamGazeToScrollFrame({
+          clientX: gaze.latestRef.current.clientX!,
+          clientY: gaze.latestRef.current.clientY!,
+          readerRect: scrollEl.getBoundingClientRect(),
+          heldNx: controllerRef.current.gazeNx,
+          heldNy: controllerRef.current.gazeNy,
+          baseConfidence: gaze.latestRef.current.confidence,
+        })
+      : null
 
   return (
     <div className="relative min-h-0 flex-1">
@@ -212,6 +227,11 @@ export function ReaderViewport() {
           <div className="text-muted-foreground font-mono text-[11px]">
             conf {(gaze.latestRef.current.confidence * 100).toFixed(0)}%
           </div>
+          {gazeDebug && (
+            <div className="text-muted-foreground mt-1 font-mono text-[11px]">
+              scroll: {gazeDebug.countsForScroll ? 'on reader' : 'ignored (off)'}
+            </div>
+          )}
         </div>
       )}
     </div>
