@@ -26,7 +26,9 @@ function emaAlpha(dt: number, tauSec: number) {
 
 /**
  * Map gaze position outside soft bands to a target scroll velocity (px/s).
- * Vertical is primary; horizontal only nudges when gaze leaves a wide lane.
+ * Vertical intent uses how far past the deadband you are (optionally shaped by
+ * `verticalDistanceExponent`); optional `verticalGazeVelocityGain` adds speed
+ * when gaze moves down/up outside the band.
  */
 export function computeTargetVelocity(
   state: ScrollControllerState,
@@ -38,17 +40,34 @@ export function computeTargetVelocity(
   const aG = emaAlpha(gaze.dt, settings.gazeSmoothingTauSec)
   const nx = state.gazeNx + aG * (gaze.nx - state.gazeNx)
   const ny = state.gazeNy + aG * (gaze.ny - state.gazeNy)
+  const nyDot = (ny - state.gazeNy) / Math.max(gaze.dt, 1e-4)
 
   const cx = 0.5
   const cy = 0.5
   const band = settings.bandHalfHeight
   const lane = settings.laneHalfWidth
 
-  let uy = 0
+  /** How far past the deadband toward bottom (0–1 when ny runs bottom..top of active zone). */
   const spanY = Math.max(1e-6, 0.5 - band)
-  if (ny > cy + band) uy = (ny - (cy + band)) / spanY
-  else if (ny < cy - band) uy = -((cy - band) - ny) / spanY
-  uy = clamp01(Math.abs(uy)) * Math.sign(uy)
+  const gamma = Math.max(
+    0.45,
+    Math.min(3.2, settings.verticalDistanceExponent),
+  )
+
+  let uy = 0
+  if (ny > cy + band) {
+    const t = clamp01((ny - (cy + band)) / spanY)
+    uy = Math.pow(t, gamma)
+  } else if (ny < cy - band) {
+    const t = clamp01(((cy - band) - ny) / spanY)
+    uy = -Math.pow(t, gamma)
+  }
+
+  const outsideY = ny > cy + band || ny < cy - band
+  const velBoost =
+    outsideY && settings.verticalGazeVelocityGain !== 0
+      ? nyDot * settings.verticalGazeVelocityGain * viewportHeight
+      : 0
 
   let ux = 0
   const horizontalOn =
@@ -62,10 +81,11 @@ export function computeTargetVelocity(
 
   let targetVy =
     uy *
-    settings.verticalGain *
-    settings.overallSensitivity *
-    viewportHeight *
-    0.65
+      settings.verticalGain *
+      settings.overallSensitivity *
+      viewportHeight *
+      0.65 +
+    velBoost
 
   let targetVx =
     ux *

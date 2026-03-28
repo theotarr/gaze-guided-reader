@@ -156,6 +156,51 @@ export function SettingsSheet(props: {
             </div>
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
+                <Label>Vertical distance curve (γ)</Label>
+                <span className="text-muted-foreground">
+                  {c.verticalDistanceExponent.toFixed(2)}
+                </span>
+              </div>
+              <p className="text-muted-foreground text-xs">
+                Speed is based on how far past the reading band you look (fraction
+                of the viewport toward the edge). γ=1 is linear in that distance;
+                γ&gt;1 keeps gentler speed near the band and pushes harder when you
+                look farther down or up.
+              </p>
+              <Slider
+                min={0.75}
+                max={2.4}
+                step={0.05}
+                value={[c.verticalDistanceExponent]}
+                onValueChange={([v]) =>
+                  settings.setControls({ verticalDistanceExponent: v })
+                }
+              />
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <Label>Gaze-motion scroll boost</Label>
+                <span className="text-muted-foreground">
+                  {c.verticalGazeVelocityGain.toFixed(2)}
+                </span>
+              </div>
+              <p className="text-muted-foreground text-xs">
+                Extra speed from moving your gaze down or up (only outside the
+                vertical band). 0 = off. Try 0.4–1.2 for a stronger “sweep to scroll”
+                feel.
+              </p>
+              <Slider
+                min={0}
+                max={2}
+                step={0.05}
+                value={[c.verticalGazeVelocityGain]}
+                onValueChange={([v]) =>
+                  settings.setControls({ verticalGazeVelocityGain: v })
+                }
+              />
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
                 <Label>Horizontal gain</Label>
                 <span className="text-muted-foreground">
                   {c.horizontalGain.toFixed(2)}

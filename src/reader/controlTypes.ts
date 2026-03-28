@@ -11,6 +11,16 @@ export interface ControlSettings {
   bandHalfHeight: number
   /** Half-width of horizontal lane (no correction inside), as fraction of viewport (0–0.5) */
   laneHalfWidth: number
+  /**
+   * Vertical speed shaping: intent is raised to this power after mapping how far past
+   * the deadband you are (1 = linear in distance; >1 = faster when looking farther).
+   */
+  verticalDistanceExponent: number
+  /**
+   * Extra vertical speed from downward/upward gaze motion (normalized y per second × viewport height).
+   * 0 disables. Only applied outside the vertical deadband.
+   */
+  verticalGazeVelocityGain: number
   /** Below this confidence, scale motion toward zero */
   confidenceThreshold: number
   /** Horizontal correction is disabled below this confidence */
@@ -29,6 +39,8 @@ export const defaultControlSettings: ControlSettings = {
   jerkLimitPxPerSec2: 1600,
   bandHalfHeight: 0.08,
   laneHalfWidth: 0.22,
+  verticalDistanceExponent: 1,
+  verticalGazeVelocityGain: 0,
   confidenceThreshold: 0.32,
   horizontalConfidenceThreshold: 0.45,
   gazeSmoothingTauSec: 0.1,
