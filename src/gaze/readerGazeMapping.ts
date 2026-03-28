@@ -2,6 +2,16 @@
 export const READER_GAZE_EDGE_MARGIN_PX = 16
 
 /**
+ * Extra space **above** the reader top where gaze still counts for scrolling.
+ * Looking up to scroll back often lands on chrome or just above the panel; without
+ * this, those samples were dropped and upward scroll never engaged.
+ */
+export const READER_GAZE_TOP_OVERFLOW_PX = 280
+
+/** Pixels below the reader bottom (usually smaller than top). */
+export const READER_GAZE_BOTTOM_OVERFLOW_PX = READER_GAZE_EDGE_MARGIN_PX
+
+/**
  * Pixels past `window` bounds before we treat gaze as physically off-window.
  * (WebGazer stays in viewport space; this only filters wild outliers.)
  */
@@ -65,11 +75,16 @@ export function mapWebcamGazeToScrollFrame(opts: {
     READER_GAZE_EDGE_MARGIN_PX /
     Math.max(1, Math.min(readerRect.width, readerRect.height))
 
+  const topMarginN =
+    READER_GAZE_TOP_OVERFLOW_PX / Math.max(1, readerRect.height)
+  const bottomMarginN =
+    READER_GAZE_BOTTOM_OVERFLOW_PX / Math.max(1, readerRect.height)
+
   const inReader =
     nxRaw >= -marginN &&
     nxRaw <= 1 + marginN &&
-    nyRaw >= -marginN &&
-    nyRaw <= 1 + marginN
+    nyRaw >= -topMarginN &&
+    nyRaw <= 1 + bottomMarginN
 
   const wPad = WINDOW_GAZE_MARGIN_PX
   const win =
@@ -95,6 +110,7 @@ export function mapWebcamGazeToScrollFrame(opts: {
     }
   }
 
+  /* Gaze above the box maps to ny=0 so “look up to go back” still drives scroll-up. */
   return {
     nx: clamp01(nxRaw),
     ny: clamp01(nyRaw),

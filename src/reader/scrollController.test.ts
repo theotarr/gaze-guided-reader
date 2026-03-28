@@ -33,6 +33,19 @@ describe('scrollController', () => {
     }
   })
 
+  it('produces upward scroll when gaze is at the top of the viewport', () => {
+    const state = createInitialScrollState()
+    const snap = { ...defaultControlSettings, gazeSmoothingTauSec: 0.001 }
+    const out = computeTargetVelocity(
+      state,
+      { nx: 0.5, ny: 0, confidence: 1, dt: 1 / 60 },
+      snap,
+      400,
+      600,
+    )
+    expect(out.targetVy).toBeLessThan(0)
+  })
+
   it('with γ>1, boosts scroll more for far-down gaze than for just-past-band gaze (vs γ=1)', () => {
     const state = createInitialScrollState()
     const snap = { ...defaultControlSettings, gazeSmoothingTauSec: 0.001 }

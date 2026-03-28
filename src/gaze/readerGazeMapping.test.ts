@@ -37,7 +37,7 @@ describe('mapWebcamGazeToScrollFrame', () => {
     expect(out.ny).toBeCloseTo(0.5, 5)
   })
 
-  it('does not count gaze above the reader; holds prior nx/ny and zeros confidence', () => {
+  it('counts moderate “look above panel” as on-reader with ny=0 for scroll-up', () => {
     const r = rect(100, 200, 400, 600)
     const out = mapWebcamGazeToScrollFrame({
       clientX: 300,
@@ -47,10 +47,24 @@ describe('mapWebcamGazeToScrollFrame', () => {
       heldNy: 0.42,
       baseConfidence: 1,
     })
+    expect(out.countsForScroll).toBe(true)
+    expect(out.confidence).toBe(1)
+    expect(out.ny).toBe(0)
+    expect(out.nx).toBeCloseTo(0.5, 5)
+  })
+
+  it('ignores gaze far above the extended top margin', () => {
+    const r = rect(100, 200, 400, 600)
+    const out = mapWebcamGazeToScrollFrame({
+      clientX: 300,
+      clientY: -150,
+      readerRect: r,
+      heldNx: 0.35,
+      heldNy: 0.42,
+      baseConfidence: 1,
+    })
     expect(out.countsForScroll).toBe(false)
     expect(out.confidence).toBe(0)
-    expect(out.nx).toBe(0.35)
-    expect(out.ny).toBe(0.42)
   })
 
   it('returns zeros confidence for non-finite coordinates', () => {
