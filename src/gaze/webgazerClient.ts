@@ -50,4 +50,7 @@ export function applyWebgazerVisualPrefs(
   wg.params.saveDataAcrossSessions = false
 }
 
-export type GazeListener = (data: { x: number | null; y: number | null }, elapsed: number) => void
+export type GazeListener = (
+  data: { x: number | null; y: number | null } | null,
+  elapsed: number,
+) => void

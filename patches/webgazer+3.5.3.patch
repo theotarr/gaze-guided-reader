@@ -1,0 +1,84 @@
+diff --git a/node_modules/webgazer/src/index.mjs b/node_modules/webgazer/src/index.mjs
+index 17b58dc..9ef6c82 100644
+--- a/node_modules/webgazer/src/index.mjs
++++ b/node_modules/webgazer/src/index.mjs
+@@ -244,21 +244,38 @@ async function getPrediction(regModelIndex) {
+     predictions.push(regs[reg].predict(latestEyeFeatures));
+   }
+   if (regModelIndex !== undefined) {
+-    return predictions[regModelIndex] === null ? null : {
+-      'x' : predictions[regModelIndex].x,
+-      'y' : predictions[regModelIndex].y,
++    var predIdx = predictions[regModelIndex];
++    // Ridge reg may return undefined (not trained yet); only null was handled before.
++    if (predIdx == null || predIdx.x == null || predIdx.y == null) {
++      return null;
++    }
++    return {
++      'x' : predIdx.x,
++      'y' : predIdx.y,
+       'eyeFeatures': latestEyeFeatures
+     };
+   } else {
+-    return predictions.length === 0 || predictions[0] === null ? null : {
+-      'x' : predictions[0].x,
+-      'y' : predictions[0].y,
++    var pred0 = predictions[0];
++    if (predictions.length === 0 || pred0 == null || pred0.x == null || pred0.y == null) {
++      return null;
++    }
++    return {
++      'x' : pred0.x,
++      'y' : pred0.y,
+       'eyeFeatures': latestEyeFeatures,
+       'all' : predictions
+     };
+   }
+ }
+ 
++function isValidGazePoint(d) {
++  return d != null
++    && typeof d.x === 'number'
++    && typeof d.y === 'number'
++    && !isNaN(d.x)
++    && !isNaN(d.y);
++}
++
+ /**
+  * Runs every available animation frame if webgazer is not paused
+  */
+@@ -301,18 +318,29 @@ async function loop() {
+     // [20200623 xk] callback to function passed into setGazeListener(fn)
+     callback(latestGazeData, elapsedTime);
+ 
+-    if( latestGazeData ) {
++    if( isValidGazePoint(latestGazeData) ) {
+       // [20200608 XK] Smoothing across the most recent 4 predictions, do we need this with Kalman filter?
+       smoothingVals.push(latestGazeData);
+       var x = 0;
+       var y = 0;
+-      var len = smoothingVals.length;
++      var count = 0;
+       for (var d = 0; d < smoothingVals.length; d++) {
+-        x += smoothingVals.get(d).x;
+-        y += smoothingVals.get(d).y;
++        var sample = smoothingVals.get(d);
++        if (!isValidGazePoint(sample)) {
++          continue;
++        }
++        x += sample.x;
++        y += sample.y;
++        count++;
++      }
++
++      if (count === 0) {
++        gazeDot.style.display = 'none';
++        requestAnimationFrame(loop);
++        return;
+       }
+ 
+-      var pred = util.bound({'x':x/len, 'y':y/len});
++      var pred = util.bound({'x':x/count, 'y':y/count});
+ 
+       if (webgazer.params.storingPoints) {
+         drawCoordinates('blue',pred.x,pred.y); //draws the previous predictions

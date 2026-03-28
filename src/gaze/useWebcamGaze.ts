@@ -100,7 +100,8 @@ export function useWebcamGaze(opts: {
         const f = factorRef.current
         const on = enabledRef.current
         const conf = f >= 1 ? 0.88 : 0.25 + 0.65 * f
-        if (data.x == null || data.y == null) {
+        // WebGazer passes null when no prediction yet (e.g. before calibration).
+        if (!data || data.x == null || data.y == null) {
           latest.current = {
             clientX: null,
             clientY: null,

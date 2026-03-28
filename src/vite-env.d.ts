@@ -25,7 +25,10 @@ declare module 'webgazer' {
     resume: () => Promise<unknown>
     end: () => unknown
     setGazeListener: (
-      fn: (data: { x: number | null; y: number | null }, elapsed: number) => void,
+      fn: (
+        data: { x: number | null; y: number | null } | null,
+        elapsed: number,
+      ) => void,
     ) => unknown
     clearGazeListener: () => unknown
     isReady: () => boolean
