@@ -48,6 +48,19 @@ export function applyWebgazerVisualPrefs(
   wg.params.showFaceFeedbackBox = false
   wg.params.showGazeDot = !opts.hideVisuals
   wg.params.saveDataAcrossSessions = false
+  /* Kalman on ridge output reduces jitter (see webgazer `applyKalmanFilter`). */
+  wg.applyKalmanFilter(true)
+  const prev = wg.params.camConstraints as {
+    video: Record<string, unknown>
+  }
+  wg.params.camConstraints = {
+    video: {
+      ...prev.video,
+      facingMode: 'user',
+      width: { min: 320, ideal: 960, max: 1920 },
+      height: { min: 240, ideal: 720, max: 1080 },
+    },
+  }
 }
 
 export type GazeListener = (

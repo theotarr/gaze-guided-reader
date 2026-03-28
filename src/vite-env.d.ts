@@ -19,7 +19,10 @@ declare module 'webgazer' {
       showFaceFeedbackBox: boolean
       showGazeDot: boolean
       saveDataAcrossSessions: boolean
+      applyKalmanFilter: boolean
+      camConstraints: { video: Record<string, unknown> }
     }
+    applyKalmanFilter: (enabled: boolean) => unknown
     begin: (onFail?: () => void) => Promise<unknown>
     pause: () => unknown
     resume: () => Promise<unknown>

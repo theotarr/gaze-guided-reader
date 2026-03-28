@@ -42,7 +42,9 @@ export function SettingsSheet(props: {
         <SheetHeader>
           <SheetTitle>Reader settings</SheetTitle>
           <SheetDescription>
-            Tune gaze-driven scrolling. Try mock mode first without a camera.
+            Defaults lean toward slower, smoother motion. Raise “motion smoothing”
+            or “gaze path smoothing” for an even calmer feel; lower max speed if it
+            still feels fast.
           </SheetDescription>
         </SheetHeader>
 
@@ -62,6 +64,16 @@ export function SettingsSheet(props: {
               </SelectContent>
             </Select>
           </div>
+
+          {settings.gazeSource === 'webcam' && (
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              <span className="text-foreground font-medium">Sharper tracking:</span>{' '}
+              face the camera in even light, sit still, and redo all nine calibration
+              dots while looking at each number—not the cursor. Restart the camera
+              after a lighting or distance change. Higher camera resolution helps
+              landmarks; we request a 960×720 ideal feed when supported.
+            </p>
+          )}
 
           {settings.gazeSource === 'mock' && (
             <div className="space-y-3">
@@ -118,7 +130,7 @@ export function SettingsSheet(props: {
                 </span>
               </div>
               <Slider
-                min={0.2}
+                min={0.1}
                 max={2}
                 step={0.05}
                 value={[c.overallSensitivity]}
@@ -167,9 +179,9 @@ export function SettingsSheet(props: {
                 </span>
               </div>
               <Slider
-                min={80}
+                min={35}
                 max={900}
-                step={10}
+                step={5}
                 value={[c.maxSpeedPxPerSec]}
                 onValueChange={([v]) =>
                   settings.setControls({ maxSpeedPxPerSec: v })
@@ -183,9 +195,12 @@ export function SettingsSheet(props: {
                   {c.motionTauSec.toFixed(2)}
                 </span>
               </div>
+              <p className="text-muted-foreground text-xs">
+                Higher = scroll velocity eases more gently (slower apparent response).
+              </p>
               <Slider
-                min={0.05}
-                max={0.45}
+                min={0.06}
+                max={0.85}
                 step={0.01}
                 value={[c.motionTauSec]}
                 onValueChange={([v]) =>
@@ -200,13 +215,79 @@ export function SettingsSheet(props: {
                   {Math.round(c.jerkLimitPxPerSec2)}
                 </span>
               </div>
+              <p className="text-muted-foreground text-xs">
+                Lower = softer acceleration (less snap when speed changes).
+              </p>
               <Slider
-                min={600}
+                min={400}
                 max={6200}
                 step={100}
                 value={[c.jerkLimitPxPerSec2]}
                 onValueChange={([v]) =>
                   settings.setControls({ jerkLimitPxPerSec2: v })
+                }
+              />
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <Label>Gaze path smoothing (τ sec)</Label>
+                <span className="text-muted-foreground">
+                  {c.gazeSmoothingTauSec.toFixed(3)}
+                </span>
+              </div>
+              <p className="text-muted-foreground text-xs">
+                Low-pass on gaze before the reading band. Higher = smoother, more
+                lag.
+              </p>
+              <Slider
+                min={0.02}
+                max={0.22}
+                step={0.005}
+                value={[c.gazeSmoothingTauSec]}
+                onValueChange={([v]) =>
+                  settings.setControls({ gazeSmoothingTauSec: v })
+                }
+              />
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <Label>Scroll confidence floor</Label>
+                <span className="text-muted-foreground">
+                  {c.confidenceThreshold.toFixed(2)}
+                </span>
+              </div>
+              <p className="text-muted-foreground text-xs">
+                Below this, scrolling eases off (helps noisy tracking). Raise if
+                motion dies too often.
+              </p>
+              <Slider
+                min={0.12}
+                max={0.58}
+                step={0.01}
+                value={[c.confidenceThreshold]}
+                onValueChange={([v]) =>
+                  settings.setControls({ confidenceThreshold: v })
+                }
+              />
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <Label>Horizontal confidence min</Label>
+                <span className="text-muted-foreground">
+                  {c.horizontalConfidenceThreshold.toFixed(2)}
+                </span>
+              </div>
+              <p className="text-muted-foreground text-xs">
+                Sideways scroll only runs above this confidence (usually keep ≥
+                vertical floor).
+              </p>
+              <Slider
+                min={0.2}
+                max={0.75}
+                step={0.01}
+                value={[c.horizontalConfidenceThreshold]}
+                onValueChange={([v]) =>
+                  settings.setControls({ horizontalConfidenceThreshold: v })
                 }
               />
             </div>

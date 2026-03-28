@@ -19,18 +19,19 @@ export interface ControlSettings {
   gazeSmoothingTauSec: number
 }
 
+/** Defaults biased toward slower, less twitchy scrolling (tune in Settings). */
 export const defaultControlSettings: ControlSettings = {
-  overallSensitivity: 1,
-  verticalGain: 1.1,
-  horizontalGain: 0.35,
-  maxSpeedPxPerSec: 420,
-  motionTauSec: 0.14,
-  jerkLimitPxPerSec2: 2800,
-  bandHalfHeight: 0.07,
+  overallSensitivity: 0.78,
+  verticalGain: 1,
+  horizontalGain: 0.3,
+  maxSpeedPxPerSec: 300,
+  motionTauSec: 0.24,
+  jerkLimitPxPerSec2: 1600,
+  bandHalfHeight: 0.08,
   laneHalfWidth: 0.22,
-  confidenceThreshold: 0.35,
+  confidenceThreshold: 0.32,
   horizontalConfidenceThreshold: 0.45,
-  gazeSmoothingTauSec: 0.055,
+  gazeSmoothingTauSec: 0.1,
 }
 
 export interface ScrollControllerState {
